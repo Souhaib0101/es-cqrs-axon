@@ -1,0 +1,27 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: accounts
+      POSTGRES_USER: accounts
+      POSTGRES_PASSWORD: accounts
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  axon-server:
+    image: axoniq/axonserver:2024.2.0
+    ports:
+      - "8024:8024"
+      - "8124:8124"
+    environment:
+      AXONIQ_AXONSERVER_STANDALONE: "true"
+    volumes:
+      - axon-data:/axonserver/data
+      - axon-events:/axonserver/events
+
+volumes:
+  postgres-data:
+  axon-data:
+  axon-events:
