@@ -18,6 +18,20 @@ Swagger UI: <http://localhost:8080/swagger-ui.html>
 
 H2 console: <http://localhost:8080/h2-console> (JDBC URL `jdbc:h2:mem:accounts`, user `sa`, no password)
 
+## Angular dashboard
+
+The standalone Angular client lives in `frontend/`. It provides account creation and activation, credit/debit actions, a live operation feed, and account balance summaries. It proxies `/commands` and `/queries` to the backend on port `8080` during development.
+
+Use Node.js `22.22.3` or newer, then start the UI in a second terminal:
+
+```shell
+cd frontend
+npm install
+npm start
+```
+
+Open <http://localhost:4200>. Angular's version compatibility and setup requirements are documented in the [official Angular docs](https://angular.dev/reference/versions).
+
 The Axon in-memory event store is intended for a single process and loses events on restart. For a durable, distributed event store, run Axon Server and activate the Maven profile:
 
 ```shell

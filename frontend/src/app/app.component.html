@@ -1,0 +1,130 @@
+<div class="shell">
+  <aside class="sidebar">
+    <a class="brand" href="#" aria-label="Ledger home">
+      <span class="brand-mark">L</span>
+      <span>ledger<span class="brand-dot">.</span><small>ACCOUNT WORKSPACE</small></span>
+    </a>
+    <div class="side-label">WORKSPACE</div>
+    <button class="nav-item active" type="button"><span class="nav-icon">▦</span> Accounts <span class="nav-count">{{ accounts().length }}</span></button>
+    <div class="sidebar-foot">
+      <span class="avatar">SM</span>
+      <span class="profile-name">Souhaib Montaki<small>Personal workspace</small></span>
+      <span class="profile-more">···</span>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="breadcrumbs"><span>Workspace</span><span class="crumb-slash">/</span><strong>Accounts</strong></div>
+      <div class="topbar-right"><span class="system-status" [class.system-down]="!serverReady()"><i></i> {{ serverReady() ? 'API connected' : 'API unavailable' }}</span><span class="top-avatar">SM</span></div>
+    </header>
+
+    <section class="content">
+      <div class="page-heading">
+        <div>
+          <div class="eyebrow">BANKING OVERVIEW</div>
+          <h1>Accounts <span class="heading-count">{{ accounts().length }}</span></h1>
+          <p class="subtitle">Manage balances and track account activity in real time.</p>
+        </div>
+        <button class="button button-dark" type="button" (click)="refreshAccounts()" [disabled]="loading()">
+          <span class="button-plus">↻</span> Refresh
+        </button>
+      </div>
+
+      @if (error()) { <div class="alert alert-error" role="alert"><span>!</span>{{ error() }}</div> }
+      @if (notice()) { <div class="alert alert-success" role="status"><span>✓</span>{{ notice() }}</div> }
+
+      <section class="overview-grid" aria-label="Account summary">
+        <article class="summary-card summary-dark">
+          <div class="summary-top"><span>TOTAL BALANCE · {{ summaryCurrency() }}</span><span class="summary-glyph">◈</span></div>
+          <div class="summary-value">{{ totalBalance() | number:'1.2-2' }} <span>{{ summaryCurrency() }}</span></div>
+          <div class="summary-foot"><span class="trend">↗</span> Across {{ accounts().length }} account{{ accounts().length === 1 ? '' : 's' }}</div>
+          <div class="balance-lines"><i></i><i></i><i></i></div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-top"><span>ACTIVE ACCOUNTS</span><span class="summary-icon icon-green">✓</span></div>
+          <div class="summary-value">{{ accounts().filter(isActive).length }}<span class="value-unit"> / {{ accounts().length }}</span></div>
+          <div class="summary-foot">Ready for transactions</div>
+        </article>
+        <article class="summary-card">
+          <div class="summary-top"><span>RECENT OPERATIONS</span><span class="summary-icon icon-blue">↗</span></div>
+          <div class="summary-value">{{ operations().length }}<span class="value-unit"> selected</span></div>
+          <div class="summary-foot">For selected account</div>
+        </article>
+      </section>
+
+      <section class="workspace-grid">
+        <div class="panel accounts-panel">
+          <div class="panel-heading">
+            <div><h2>Your accounts</h2><p>Select an account to view its activity</p></div>
+            <span class="live-indicator" [class.is-live]="live()"><i></i>{{ live() ? 'LIVE' : 'SYNCING' }}</span>
+          </div>
+
+          @if (loading() && accounts().length === 0) {
+            <div class="empty-state"><span class="loader"></span><p>Loading accounts…</p></div>
+          } @else if (accounts().length === 0) {
+            <div class="empty-state"><span class="empty-icon">◈</span><h3>No accounts yet</h3><p>Create an account to start tracking your balance and activity.</p></div>
+          } @else {
+            <div class="account-list">
+              @for (account of accounts(); track account.id) {
+                <button class="account-row" type="button" [class.selected]="selectedId() === account.id" (click)="selectAccount(account)">
+                  <span class="account-symbol">{{ account.currency.slice(0, 1) }}</span>
+                  <span class="account-info"><strong>Everyday account</strong><small>··{{ account.id.slice(-6).toUpperCase() }}</small></span>
+                  <span class="account-balance"><strong>{{ account.balance | currency:account.currency:'symbol':'1.2-2' }}</strong><small class="status" [class.status-active]="account.status === 'ACTIVATED'">{{ account.status }}</small></span>
+                  <span class="row-chevron">›</span>
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="panel create-panel">
+          <div class="panel-heading"><div><h2>Open an account</h2><p>Set an opening balance and currency</p></div><span class="create-symbol">＋</span></div>
+          <form (ngSubmit)="createAccount()">
+            <label for="opening-balance">Opening balance</label>
+            <div class="field-wrap"><input id="opening-balance" name="openingBalance" type="number" min="0" step="0.01" [(ngModel)]="newBalance" required><span class="field-suffix">{{ newCurrency }}</span></div>
+            <label for="currency">Currency</label>
+            <select id="currency" name="currency" [(ngModel)]="newCurrency">
+              <option value="MAD">MAD · Moroccan dirham</option>
+              <option value="EUR">EUR · Euro</option>
+              <option value="USD">USD · US dollar</option>
+              <option value="GBP">GBP · Pound sterling</option>
+            </select>
+            <button class="button button-primary full-width" type="submit" [disabled]="saving()"><span>＋</span> {{ saving() ? 'Creating…' : 'Create account' }}</button>
+            <p class="form-note">New accounts need activation before transactions.</p>
+          </form>
+        </div>
+      </section>
+
+      @if (selectedAccount(); as account) {
+        <section class="panel activity-panel">
+          <div class="panel-heading activity-heading">
+            <div><div class="eyebrow">ACCOUNT ACTIVITY</div><h2>··{{ account.id.slice(-6).toUpperCase() }} <span class="status-pill" [class.status-active]="account.status === 'ACTIVATED'">{{ account.status }}</span></h2><p>Current balance <strong>{{ account.balance | currency:account.currency:'symbol':'1.2-2' }}</strong></p></div>
+            @if (account.status === 'CREATED') { <button class="button button-primary" type="button" (click)="activateAccount()" [disabled]="saving()">Activate account</button> }
+          </div>
+          @if (account.status === 'ACTIVATED') {
+            <div class="transaction-bar">
+              <label for="transaction-amount">Amount</label>
+              <div class="field-wrap transaction-input"><input id="transaction-amount" name="transactionAmount" type="number" min="0.01" step="0.01" [(ngModel)]="transactionAmount"><span class="field-suffix">{{ account.currency }}</span></div>
+              <button class="button button-credit" type="button" (click)="transact('credit')" [disabled]="saving()">↙ Credit</button>
+              <button class="button button-debit" type="button" (click)="transact('debit')" [disabled]="saving()">↗ Debit</button>
+            </div>
+          }
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>TYPE</th><th>REFERENCE</th><th>DATE &amp; TIME</th><th class="align-right">AMOUNT</th></tr></thead>
+              <tbody>
+                @for (operation of operations(); track operation.id) {
+                  <tr><td><span class="operation-type" [class.operation-debit]="operation.type === 'DEBIT'">{{ operation.type === 'CREDIT' ? '↓' : '↑' }}</span><span class="type-label">{{ operation.type }}</span></td><td class="reference">OP-{{ operation.id }}</td><td>{{ operation.occurredAt | date:'MMM d, y · HH:mm:ss' }}</td><td class="align-right amount" [class.positive]="operation.type === 'CREDIT'" [class.negative]="operation.type === 'DEBIT'">{{ operation.type === 'CREDIT' ? '+' : '−' }}{{ operation.amount | currency:operation.currency:'symbol':'1.2-2' }}</td></tr>
+                } @empty {
+                  <tr><td colspan="4" class="table-empty">No operations yet. Credit or debit this account to see activity here.</td></tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </section>
+      }
+      <footer>LEDGER <span>·</span> CQRS &amp; EVENT SOURCING DEMO <span class="footer-right">Read model refreshes automatically</span></footer>
+    </section>
+  </main>
+</div>
