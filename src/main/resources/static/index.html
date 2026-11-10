@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Axon Banking | CQRS &amp; Event Sourcing</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+</head>
+<body>
+<main>
+    <header>
+        <div><p class="eyebrow">SPRING BOOT + AXON FRAMEWORK</p><h1>Event-sourced banking</h1>
+            <p>Every balance has a story. Follow commands, events, and projections in real time.</p></div>
+        <a href="/swagger-ui.html">Explore the API ↗</a>
+    </header>
+    <p id="message" role="status" aria-live="polite"></p>
+    <div class="layout">
+        <aside>
+            <section class="panel">
+                <h2>Create an account</h2>
+                <form id="create-form">
+                    <label>Initial balance<input name="initialBalance" type="number" min="0" step="0.01" value="1000" required></label>
+                    <label>Currency<select name="currency"><option>MAD</option><option>EUR</option><option>USD</option></select></label>
+                    <button type="submit">Create account</button>
+                </form>
+                <p class="hint">Creation emits AccountCreatedEvent, then AccountActivatedEvent.</p>
+            </section>
+            <section class="panel">
+                <div class="section-heading"><h2>Your accounts</h2><button id="refresh" class="secondary" type="button">Refresh</button></div>
+                <label>Select an account<select id="account-select"><option value="">No accounts yet</option></select></label>
+            </section>
+        </aside>
+        <div>
+            <section class="panel balance-panel">
+                <div class="section-heading"><p class="eyebrow">READ MODEL</p><span id="connection" class="badge">No account selected</span></div>
+                <h2 id="balance">—</h2><p id="account-id" class="mono">Create an account to get started.</p>
+                <div class="section-heading"><span id="account-status" class="badge">—</span>
+                    <button id="status-button" class="secondary" type="button" disabled>Suspend account</button></div>
+            </section>
+            <section class="panel">
+                <h2>Send a command</h2>
+                <form id="operation-form" class="operation-form">
+                    <label>Operation<select name="operation"><option value="credit">Credit</option><option value="debit">Debit</option></select></label>
+                    <label>Amount<input name="amount" type="number" min="0.01" step="0.01" value="100" required></label>
+                    <button id="operation-button" type="submit" disabled>Submit command</button>
+                </form>
+                <p class="hint">Commands validate business rules. Events update the read model asynchronously.</p>
+            </section>
+            <section class="panel">
+                <h2>Account statement</h2>
+                <div class="table-scroll"><table><thead><tr><th>Date</th><th>Operation</th><th>Amount</th></tr></thead>
+                    <tbody id="operations"><tr><td colspan="3">No operations yet.</td></tr></tbody></table></div>
+            </section>
+            <section class="panel">
+                <div class="section-heading"><h2>Event store</h2><span id="event-count" class="badge">0 events</span></div>
+                <p class="hint">The immutable history used to reconstruct aggregate state.</p>
+                <ol id="events" class="event-list"></ol>
+            </section>
+        </div>
+    </div>
+    <footer>CommandGateway → Aggregate → Event Store → Projection → QueryGateway</footer>
+</main>
+</body>
+</html>
